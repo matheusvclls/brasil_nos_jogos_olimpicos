@@ -17,7 +17,6 @@
 # III. Análise dos datasets
 # IV. Tratamento dos dados
 # V. Análise do Brasil nas Olimpíadas
-# VI. Conclusão
 
 
 
@@ -30,11 +29,8 @@
 # Esta base de dados contém informações desde os jogos de Atenas 1986 até o Rio 2016.
 # A análise dos dados seguirão as seguintes perguntas, que tentaremos responder ao longo do
 # projeto:
-# 1. Qual o esporte com mais medalhas?
-# 2. Qual o esporte que trouxe mais medalhas de ouro para o Brasil?
-# 3. Qual foi a colocação do Brasil com relação ao total de medalhas perante ao mundo?
-# 4. Qual foi a melhor participação do Brasil em Olimpíadas?
-# 5. Qual é a distribuição de participantes por gênero?
+# 1. Participação do Brasil nas Olimpíadas
+# 2. Desempenho do Brasil nas Olimpíadas
 
 
 
@@ -66,7 +62,7 @@ library(tidyverse)
 # Event - Modalidade do esporte
 # Medal - medalha do atleta
 
-# -  athlete_events.csv: 
+# -  noc_regions.csv: 
 # NOC - National Olympic Committee - abreviação do nome do país em 3 letras
 # region - país do atleta
 # notes - observação sobre este país
@@ -74,7 +70,7 @@ library(tidyverse)
 
 # Dataset athlete_events.csv
 # Carregando o dataset
-atletas_dados <- read_csv("C:/projetos/brasil_nos_jogos_olimpicos/dados/athlete_events.csv")
+atletas_dados <- read_csv(".\\dados\\athlete_events.csv")
 
 head(atletas_dados)
 
@@ -104,7 +100,7 @@ i <- atletas_dados[ind,]
 
 # Dataset noc_regions.csv
 # Carregando o dataset
-regiao_dados <- read_csv("C:/projetos/brasil_nos_jogos_olimpicos/dados/noc_regions.csv")
+regiao_dados <- read_csv(".\\dados\\noc_regions.csv")
 
 head(regiao_dados)
 
@@ -131,7 +127,7 @@ regiao_dados[!complete.cases(regiao_dados$region),] #check do resultado (valores
 
 # 2. Criar dataframe por medalhas de modalidades
 n_medalahas_modalidades <- atletas_dados %>%
-  group_by(NOC,Games ,Sport , Event ,Medal) %>%
+  group_by(NOC,Games ,Sport , Event ,Medal,Year) %>%
   summarize(n = n())
 
 # 3. Filtro apenas do Brasil
@@ -144,23 +140,52 @@ n_medalahas_modalidades_brasil <- n_medalahas_modalidades[n_medalahas_modalidade
 # Total de medalhas
 total_medalhas <- sum(complete.cases(n_medalahas_modalidades_brasil$Medal))
 
+# Total de modalidades nos Jogos Olímpicos
+participacao_atletas <- atletas_dados %>%filter(Season == 'Summer')%>%
+  group_by(Year) %>%
+  summarize(num_atletas =  length(unique(Event)))
 
-# Quantidade de participantes por edição
+ggplot(participacao_atletas, aes(x=Year, y=num_atletas)) +
+  geom_point() +
+  labs(title="Total de modalidades nos Jogos Olímpicos", y="Total de atletas", x = 'Ano') +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Ano") +  #remover a legenda do eixo x
+  ylab('Quantidade de modalidades') +  #alterar a legenda do eixo y
+  geom_line()
+ggsave(".\\graficos\\evolucao_modalidades.png")
+
+
+# Evolução do total de participantes por gênero
 participacao_atletas <- atletas_dados %>%filter(Season == 'Summer')%>%
   group_by(Year, Sex) %>%
   summarize(num_atletas =  length(unique(ID)))
 
 ggplot(participacao_atletas, aes(x=Year, y=num_atletas, group=Sex, color=Sex)) +
   geom_point() +
-  #scale_y_continuous() +
-  #scale_color_manual(values=c("blue","black")) +
-  labs(title="Quantidade de participantes por edição", y="Total de atletas", x = 'Ano') +
+  labs(title="Evolução do total de participantes por gênero", y="Total de atletas", x = 'Ano') +
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_line()
 
+ggsave(".\\graficos\\evolucao_participacao_mundo_genero.png")
 
 
-# Quantidade de participantes brasileiros por edição
+
+# Evolução do total de participantes
+participacao_atletas <- atletas_dados %>% filter(Season == 'Summer')%>%
+  group_by(Year) %>%
+  summarize(num_atletas =  length(unique(ID)))
+
+ggplot(participacao_atletas, aes(x=Year, y=num_atletas)) +
+  geom_point() +
+  scale_y_continuous() +
+  labs(title="Evolução do total de participantes", y="Total de atletas", x = 'Ano') +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_line()
+ggsave(".\\graficos\\evolucao_participacao_mundo.png")
+
+
+
+# Evolução da participação brasileira nos jogos por sexo
 participacao_atletas <- atletas_dados %>% filter(NOC == 'BRA')%>%filter(Season == 'Summer')%>%
   group_by(Year, Sex) %>%
   summarize(num_atletas =  length(unique(ID)))
@@ -168,31 +193,54 @@ participacao_atletas <- atletas_dados %>% filter(NOC == 'BRA')%>%filter(Season =
 ggplot(participacao_atletas, aes(x=Year, y=num_atletas, group=Sex, color=Sex)) +
   geom_point() +
   scale_y_continuous(limits=c(0,270)) +
-  #scale_color_manual(values=c("blue","black")) +
-  labs(title="Quantidade de participantes brasileiros por edição", y="Total de atletas", x = 'Ano') +
+  labs(title="Evolução da participação brasileira nos jogos por sexo", y="Total de atletas", x = 'Ano') +
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_line()
 
+ggsave(".\\graficos\\evolucao_participacao_brasil_genero.png")
 
-# Distribuição por tipos de medalhas
-medalha_counts <- n_medalahas_modalidades_brasil %>% filter(!is.na(Medal))%>%
-  group_by(Medal) %>% 
-  summarize(Count=length(Medal))
 
-medalha_counts$Medal <- factor(medalha_counts$Medal, levels=c( "Bronze", "Silver","Gold"), labels=c("Bronze", "Prata", "Ouro"))
+# Evolução da participação brasileira nos jogos
+participacao_atletas <- atletas_dados %>% filter(NOC == 'BRA')%>%filter(Season == 'Summer')%>%
+  group_by(Year) %>%
+  summarize(num_atletas =  length(unique(ID)))
 
+ggplot(participacao_atletas, aes(x=Year, y=num_atletas)) +
+  geom_point() +
+  scale_y_continuous(limits=c(0,270)) +
+  labs(title="Evolução da participação brasileira nos jogos", y="Total de atletas", x = 'Ano') +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_line()
+ggsave(".\\graficos\\evolucao_participacao_brasil.png")
+
+
+#### Total de medalhas do Brasil
+# Consolidar a base de dados para o gráfico
+contagem_medalhas <- n_medalahas_modalidades_brasil %>% filter(!is.na(Medal))%>%  #filtrar todas as medalhas que são diferentes de valores nulos
+  group_by(Medal) %>%  #agrupar por tipo de medalhas (ouro, prata e bronze) 
+  summarize(Count=length(Medal))  #sumarizar pela quantidade de medalhas
+
+# Ordenar o tipo de medalhas
+contagem_medalhas$Medal <- factor(contagem_medalhas$Medal,  #label a ser ordenada
+                                  levels=c( "Bronze", "Silver","Gold"),  #ordernar
+                                  labels=c("Bronze", "Prata", "Ouro")  #renomear as labels
+                                  )  
+
+# Construção do gráfico
 ggplot(medalha_counts, aes( y=Count, fill=Medal, x ='', label = Count)) +
-  geom_col( width = 0.35) +
-  geom_text(aes(label = Count), position = position_stack(vjust = .95)) +
-  coord_flip() +
-  scale_fill_manual(values=c( "#cd7f32","#C0C0C0","#d4af37")) +
-  ggtitle("Distribuição de medalhas por tipo") +
-  xlab("") +
-  ylab('Contagem de medalhas') +
-  guides(fill=guide_legend(title="Medalha")) + 
+  geom_col( width = 0.35) + 
+  geom_text(aes(label = Count), position = position_stack(vjust = .85)) + 
+  coord_flip() +  #orientar o gráfico na horizontal
+  scale_fill_manual(values=c( "#cd7f32","#C0C0C0","#d4af37")) +  #definir as cores das colunas
+  ggtitle("Total de medalhas do Brasil") +  #definir o título
+  xlab("") +  #remover a legenda do eixo x
+  ylab('Contagem de medalhas') +  #alterar a legenda do eixo y
+  theme(legend.position = "none") +  #remover a legenda
   theme(plot.title = element_text(hjust = 0.5)) 
 
-  
+# Salvar o gráfico em ".png"
+ggsave(".\\graficos\\desempenho_brasil.png")
+
 
 #Distribuição de medalhas por esporte
 medalha_counts <- n_medalahas_modalidades_brasil %>% filter(!is.na(Medal))%>%
@@ -214,10 +262,12 @@ ggplot(medalha_counts, aes(x=Sport, y=Count, fill=Medal, label = Count)) +
   coord_flip() +
   scale_fill_manual(values=c( "#cd7f32", "#C0C0C0", "#d4af37")) +
   ggtitle("Distribuição de medalhas por esporte") +
-  xlab("Esporte") +
+  xlab("") +
   ylab('Contagem de medalhas') +
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(legend.position = "none") +
+  theme(plot.title = element_text(hjust = 0.5))
 
+ggsave(".\\graficos\\desempenho_brasil_por_esporte.png")
 
 
 # Total de medalhas por edição
@@ -233,37 +283,27 @@ ggplot(medalha_counts, aes(x=Games, y=Count, fill=Medal, label = Count)) +
   coord_flip() +
   scale_fill_manual(values=c( "#cd7f32", "#C0C0C0", "#d4af37")) +
   ggtitle("Total de medalhas por edição") +
+  xlab("") +
+  ylab('Contagem de medalhas') +
   theme(plot.title = element_text(hjust = 0.5)) 
 
 
 
 # Total de medalhas brasileiras por edição
 medalha_counts <- n_medalahas_modalidades_brasil %>% filter(!is.na(Medal))%>%
-  group_by(Games, Medal) %>% 
+  group_by(Year, Medal) %>% 
   summarize(Count=length(Medal))
 
 medalha_counts$Medal <- factor(medalha_counts$Medal, levels=c( "Bronze", "Silver","Gold"))
 
-ggplot(medalha_counts, aes(x=Games, y=Count, fill=Medal, label = Count)) +
+ggplot(medalha_counts, aes(x=Year, y=Count, fill=Medal, label = Count)) +
   geom_col() +
   geom_text(aes(label = Count), position = position_stack(vjust = .95)) + 
   coord_flip() +
   scale_fill_manual(values=c( "#cd7f32", "#C0C0C0", "#d4af37")) +
-  ggtitle("Total de medalhas brasileiras por edição") +
+  ggtitle("Total de medalhas por edição") +
+  xlab("") +
+  ylab('Contagem de medalhas') +
+  theme(legend.position = "none") +
   theme(plot.title = element_text(hjust = 0.5)) 
-
-
-
-
-
-
-
-
-
-##########################################################################
-
-
-
-
-
-
+ggsave(".\\graficos\\desempenho_brasil_por_edicao.png")
