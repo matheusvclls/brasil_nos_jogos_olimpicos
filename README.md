@@ -1,6 +1,6 @@
 # O Brasil nos Jogos Olímpicos
 
-### Table of Contents
+### Índice
 
 1. [Instalação](#installation)
 2. [Motivação do Projeto](#motivation)
