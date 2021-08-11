@@ -34,4 +34,4 @@ Analisar a participação do Brasil no Jogos Olímpicos de Verão, tendo o detal
 
 ## Resultados <a name="results"></a>
 
-Os resultados estão disponíveis no Medium a seguir [here](https://matheusvclls.medium.com/o-brasil-nos-jogos-ol%C3%ADmpicos-6bc7d56cbc9).
+Os resultados estão disponíveis no Medium [aqui](https://matheusvclls.medium.com/o-brasil-nos-jogos-ol%C3%ADmpicos-6bc7d56cbc9).
